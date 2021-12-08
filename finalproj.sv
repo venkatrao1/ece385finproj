@@ -55,12 +55,29 @@ screenXY output_mod_coords;
 logic new_frame;
 logic [2:0] framebuffer_out;
 
+screenXY render_mod_coords;
+logic [2:0] render_color;
+logic render_done, render_ack;
+
 framebuffer_module framebuffer_mod(
 	.Clk(Clk),
 	.Reset(Reset),
 	.new_frame(new_frame),
 	.output_mod_coords(output_mod_coords),
-	.color_out(framebuffer_out)
+	.color_out(framebuffer_out),
+      .render_mod_coords(render_mod_coords),
+      .color_in(render_color),
+      .render_done(render_done),
+      .render_ack(render_ack)
+);
+
+render_module render_mod(
+      .Clk(Clk),
+      .Reset(Reset),    
+      .coords_out(render_mod_coords),
+      .color_out(render_color),
+      .render_done(render_done),
+      .render_ack(render_ack)
 );
 
 output_module output_mod(
