@@ -7,10 +7,17 @@ module framebuffer_module(
 	output [2:0] color_out
 );
 
-logic framectr; // alternate between 2 pictures to simulate double buffer?
+logic [5:0] framectr; // alternate between 2 pictures to simulate double buffer?
 always_ff @(posedge Clk) begin
 	if(Reset) framectr <= 0;
-	if(output_module_coords.x-output_module_coords.y == 0) color_out <= 3'b001;
-	else color_out <= '0;
+	else if(new_frame) framectr <= framectr+1;
+	if(framectr[5]) begin
+		if(output_module_coords.x-output_module_coords.y == 0) color_out <= output_module_coords[2:0];
+		else color_out <= '0;
+	end
+	else begin
+		if(output_module_coords.y == 120) color_out <= '1;
+		else color_out <= '0;
+	end
 end
 endmodule

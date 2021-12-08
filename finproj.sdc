@@ -11,9 +11,10 @@ create_clock -period "50.0 MHz" [get_ports MAX10_CLK1_50]
 create_clock -period "50.0 MHz" [get_ports MAX10_CLK2_50]
 
 # SDRAM CLK
-create_generated_clock -source [get_pins { u0|sdram_pll|sd1|pll7|clk[1] }] \
-                      -name clk_dram_ext [get_ports {DRAM_CLK}]
+# create_generated_clock -source [get_pins { u0|sdram_pll|sd1|pll7|clk[1] }] \
+                      -name clk_dram_ext [get_ports {DRAM_CLK}] # commented just in case
 
+# create_generated_clock -name clkdiv -divide_by 2 -source [get_ports MAX10_CLK1_50] [get_pins {output_module:output_mod|vga_controller:vga_cont|clkdiv}]
 
 #**************************************************************
 # Create Generated Clock

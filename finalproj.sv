@@ -59,7 +59,7 @@ framebuffer_module framebuffer_mod(
 	.Clk(Clk),
 	.Reset(Reset),
 	.new_frame(new_frame),
-	.output_module_coords(output_mod_coords),
+	.output_mod_coords(output_mod_coords),
 	.color_out(framebuffer_out)
 );
 

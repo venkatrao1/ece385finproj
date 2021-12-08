@@ -9,7 +9,7 @@ module output_module (
 	input logic [2:0] framebuffer_output,
 	output RGBcolor color_out
 );
-assign new_frame = !vs;
+assign new_frame = ~cont_vs_delayed & vs; // pulses one cycle per frame, right before vsync dips
 
 // read pixel from framebuffer (put x and y into framebuffer input)
 logic [9:0] DrawX, DrawY;
