@@ -45,4 +45,33 @@ module finalproj (
       inout              ARDUINO_RESET_N 
 );
 
+logic Reset; // active high, for now let's keep it at 0
+assign Reset = 0;
+
+logic Clk;
+assign Clk = MAX10_CLK1_50; // if we want to use a PLL we can change this.
+
+screenXY output_mod_coords;
+logic new_frame;
+logic [2:0] framebuffer_out;
+
+framebuffer_module framebuffer_mod(
+	.Clk(Clk),
+	.Reset(Reset),
+	.new_frame(new_frame),
+	.output_module_coords(output_mod_coords),
+	.color_out(framebuffer_out)
+);
+
+output_module output_mod(
+	.Clk(Clk),
+	.Reset(Reset),
+	.hs(VGA_HS),
+	.vs(VGA_VS),
+	.new_frame(new_frame),
+	.framebuffer_coords(output_mod_coords),
+	.framebuffer_output(framebuffer_out),
+	.color_out({VGA_R,VGA_G,VGA_B})
+);
+
 endmodule

@@ -29,8 +29,8 @@ logic [2:0] lastSeen [319:0]; // last seen colors
 logic [2:0] lastPaletteColor;
 RGBcolor lastSeenRGB;
 RGBcolor framebufferRGB;
-palette lastSeenPalette(.palette_index(lastPaletteColor), .output(lastSeenRGB));
-palette framebufferPalette(.palette_index(framebuffer_output), .output(framebufferRGB));
+palette lastSeenPalette(.palette_index(lastPaletteColor), .color(lastSeenRGB));
+palette framebufferPalette(.palette_index(framebuffer_output), .color(framebufferRGB));
 
 
 // actually generate hs and vs, rgb signals based on this (2 cycles later)
@@ -47,7 +47,7 @@ always_ff @(posedge Clk) begin
 	hs <= cont_hs_delayed;
 	vs <= cont_vs_delayed;
 	if(!shouldDisplay_delayed) begin
-		if (!cont_vs) lastSeen[framebuffer_coords_delayed.x] <= '0; // clear lastSeen if new frame
+		if (!cont_vs_delayed) lastSeen[framebuffer_coords_delayed.x] <= '0; // clear lastSeen if new frame
 		color_out <= '0; // display black while blanking
 	end
 	else begin
