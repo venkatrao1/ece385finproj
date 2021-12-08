@@ -1,3 +1,4 @@
+`include "structs.sv"
 module finalproj (
       ///////// Clocks /////////
       input    MAX10_CLK1_50,
