@@ -58,6 +58,17 @@ logic [2:0] framebuffer_out;
 screenXY render_mod_coords;
 logic [2:0] render_color;
 logic render_done, render_ack;
+logic framebuffer_we;
+
+posXY player_pos;
+angle player_angle;
+assign player_pos.x = 0;
+assign player_pos.y = 0;
+//assign player_angle = 256;
+
+always_ff @(posedge Clk) begin
+      if(new_frame) player_angle <= player_angle + 1; // spin
+end
 
 framebuffer_module framebuffer_mod(
 	.Clk(Clk),
@@ -67,6 +78,7 @@ framebuffer_module framebuffer_mod(
 	.color_out(framebuffer_out),
       .render_mod_coords(render_mod_coords),
       .color_in(render_color),
+      .we(framebuffer_we),
       .render_done(render_done),
       .render_ack(render_ack)
 );
@@ -76,8 +88,11 @@ render_module render_mod(
       .Reset(Reset),    
       .coords_out(render_mod_coords),
       .color_out(render_color),
+      .framebuffer_we(framebuffer_we),
       .render_done(render_done),
-      .render_ack(render_ack)
+      .render_ack(render_ack),
+      .player_pos(player_pos),
+      .player_angle(player_angle)
 );
 
 output_module output_mod(

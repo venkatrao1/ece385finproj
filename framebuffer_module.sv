@@ -7,6 +7,7 @@ module framebuffer_module(
 	output [2:0] color_out,
 	input screenXY render_mod_coords,
 	input [2:0] color_in,
+	input we,
 	input render_done, // input from rendering module when current frame is done
 	output render_ack // pulses high for one cycle when the framebuffers switch and the rendering module can do stuff again
 );
@@ -36,8 +37,8 @@ always_ff @(posedge Clk) begin
 	buffer0out <= buffer0[output_addr];
 	case(state)
 		CLEAR: begin
-			if(whichDisplaying == 1) buffer0[clearctr] <= '0;
-			else buffer1[clearctr] <= '0;
+			if(whichDisplaying == 1) buffer0[clearctr] <= 7; // reset this back to 0 (next line too), just for debugging TODO
+			else buffer1[clearctr] <= 7;
 			clearctr <= clearctr+1;
 			if(clearctr == 86399) begin
 				state <= WAIT_RENDER;
@@ -46,8 +47,10 @@ always_ff @(posedge Clk) begin
 		end
 		WAIT_RENDER: begin
 			render_ack <= 0;
-			if(whichDisplaying == 1) buffer0[renderer_addr] <= color_in;
-			else buffer1[renderer_addr] <= color_in;
+			if(we) begin
+				if(whichDisplaying == 1) buffer0[renderer_addr] <= color_in;
+				else buffer1[renderer_addr] <= color_in;
+			end
 			if(render_done) state <= WAIT_VSYNC;
 		end
 		WAIT_VSYNC: begin
