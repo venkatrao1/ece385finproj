@@ -62,8 +62,8 @@ logic framebuffer_we;
 
 posXY player_pos;
 angle player_angle;
-assign player_pos.x = 0;
-assign player_pos.y = 0;
+assign player_pos.x.intpart = 128;
+assign player_pos.y.intpart = 128;
 
 always_ff @(posedge Clk) begin
       if(new_frame) player_angle <= player_angle + 1; // spin

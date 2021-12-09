@@ -256,6 +256,8 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name SYSTEMVERILOG_FILE lookuptables/RenderStepLUT.sv
+set_global_assignment -name QIP_FILE lookuptables/RenderStepROM.qip
 set_global_assignment -name QIP_FILE lookuptables/HeightScaleROM.qip
 set_global_assignment -name QIP_FILE lookuptables/TrigRom.qip
 set_global_assignment -name SYSTEMVERILOG_FILE lookuptables/TrigLUT.sv
@@ -270,4 +272,5 @@ set_global_assignment -name SYSTEMVERILOG_FILE output_module.sv
 set_global_assignment -name SYSTEMVERILOG_FILE framebuffer_module.sv
 set_global_assignment -name SYSTEMVERILOG_FILE finalproj.sv
 set_global_assignment -name QIP_FILE heightmultiplier/heightmultiplier.qip
+set_global_assignment -name QIP_FILE lookuptables/RenderStepRom.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

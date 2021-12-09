@@ -44,8 +44,8 @@ angle player_angle_L;
 angle player_angle_perpend;
 TrigLUT triglut_LX(.clk(Clk), .inval(player_angle_L+512), .outval(dir_L.x));
 TrigLUT triglut_LY(.clk(Clk), .inval(player_angle_L), .outval(dir_L.y));
-TrigLUT triglut_perpendX(.clk(Clk), .inval(player_angle_perpend+512), .outval(dir_perpend.x));
-TrigLUT triglut_perpendY(.clk(Clk), .inval(player_angle_perpend), .outval(dir_perpend.y));
+RenderStepLUT steplut_perpendX(.clk(Clk), .inval(player_angle_perpend+512), .outval(dir_perpend.x));
+RenderStepLUT steplut_perpendY(.clk(Clk), .inval(player_angle_perpend), .outval(dir_perpend.y));
 
 posXY slidingPos; // slides from left to right as our row counter increases
 
@@ -95,8 +95,6 @@ always_ff @(posedge Clk) begin
 			INIT_COUNTERS: begin
 				curHeight <= mapresult.height + 2; // we are 2 tall
 				dist_ctr <= 0;
-				curPosL.x <= curPos.x;
-				curPosL.y <= curPos.y;
 				curPerpendVector.x <= 0;
 				curPerpendVector.y <= 0;
 				state <= INIT_ROW;
@@ -104,8 +102,10 @@ always_ff @(posedge Clk) begin
 			INIT_ROW: begin
 				curPosL.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]); // sub half of dir components from curPoses
 				slidingPos.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]);
-				curPerpendVector.x <= curPerpendVector.x + {{11{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x[43:1]} + (dir_perpend.x[0]& ~dist_ctr[0]);
-				curPerpendVector.y <= curPerpendVector.y + {{11{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y[43:1]} + (dir_perpend.y[0]& ~dist_ctr[0]);
+				// these numbers are going to be 18 bits dec, 36 bits frac
+				// so curPerPendVector is currently += dir_perpend_scaled*1 = actual dir * 2^8
+				curPerpendVector.x <= curPerpendVector.x + {{10{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x};
+				curPerpendVector.y <= curPerpendVector.y + {{10{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y};
 				curPosL.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
 				slidingPos.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
 				curX <= 0;
@@ -138,7 +138,7 @@ always_ff @(posedge Clk) begin
 					end
 				end
 				if(curX == 319) begin
-					if(dist_ctr == 200) begin
+					if(dist_ctr == 511) begin
 						state <= WAIT_ACK;
 						render_done <= 1;
 					end
@@ -149,8 +149,8 @@ always_ff @(posedge Clk) begin
 				end
 				else begin
 					curX <= curX + 1;
-					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>7); // why does this work
-					slidingPos.y <= slidingPos.y + (curPerpendVector.y>>>7);
+					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>8); // why does this work
+					slidingPos.y <= slidingPos.y + (curPerpendVector.y>>>8);
 					state <= RENDER_0;
 				end
 			end
