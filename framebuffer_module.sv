@@ -37,8 +37,8 @@ always_ff @(posedge Clk) begin
 	buffer0out <= buffer0[output_addr];
 	case(state)
 		CLEAR: begin
-			if(whichDisplaying == 1) buffer0[clearctr] <= 7; // reset this back to 0 (next line too), just for debugging TODO
-			else buffer1[clearctr] <= 7;
+			if(whichDisplaying == 1) buffer0[clearctr] <= 0;
+			else buffer1[clearctr] <= 0;
 			clearctr <= clearctr+1;
 			if(clearctr == 86399) begin
 				state <= WAIT_RENDER;

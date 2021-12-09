@@ -11,7 +11,7 @@ module render_module (
 	input angle player_angle
 );
 
-localparam horizFOV = 320; // basically, tan of this angle = 512/240 * tan(vert_fov)
+localparam horizFOV = 245; // basically, tan of this angle = 320/240 * tan(vert_fov)
 localparam horizonY = 120; // the horizon is midway down by default
 
 maptile mapresult;
@@ -103,8 +103,7 @@ always_ff @(posedge Clk) begin
 				state <= RENDER_0;
 			end
 			RENDER_0: begin
-				maplutpos.x <= slidingPos.x + (curPerpendVector.x>>>4)*3;
-				maplutpos.y <= slidingPos.y + (curPerpendVector.y>>>4)*3;
+				maplutpos <= slidingPos;
 				state <= RENDER_1;
 			end
 			RENDER_1: begin // maplut still processing
@@ -119,12 +118,12 @@ always_ff @(posedge Clk) begin
 				//coords_out.x <= maplutpos.x.intpart;
 				//coords_out.y <= maplutpos.y.intpart;
 				//color_out <= mapresult.color;
-				if(screencolsigned < 240) begin // TODO: switch back to screencol is positive
+				if(!screencolsigned[17]) begin // TODO: switch back to screencol is positive
 					framebuffer_we <= 1;
 					coords_out.x <= curX;
-					//if(screencolsigned > 239) coords_out.y <= 0;
-					// else coords_out.y <= 239 - screencolsigned;
-					coords_out.y <= 239 - mapresult.height; // change back to above TODO
+					if(screencolsigned > 239) coords_out.y <= 0;
+					else coords_out.y <= 239 - screencolsigned;
+					//coords_out.y <= 239 - mapresult.height; // change back to above TODO
 					color_out <= mapresult.color;
 				end
 				if(curX == 319) begin
