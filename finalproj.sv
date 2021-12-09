@@ -46,7 +46,7 @@ module finalproj (
 );
 
 logic Reset; // active high, for now let's keep it at 0
-assign Reset = 0;
+always_ff @(posedge Clk) Reset <= ~KEY[0];
 
 logic Clk;
 assign Clk = MAX10_CLK1_50; // if we want to use a PLL we can change this.
@@ -62,12 +62,6 @@ logic framebuffer_we;
 
 posXY player_pos;
 angle player_angle;
-assign player_pos.x.intpart = 128;
-assign player_pos.y.intpart = 128;
-
-always_ff @(posedge Clk) begin
-      if(new_frame) player_angle <= player_angle + 1; // spin
-end
 
 framebuffer_module framebuffer_mod(
 	.Clk(Clk),
@@ -104,5 +98,22 @@ output_module output_mod(
 	.framebuffer_output(framebuffer_out),
 	.color_out({VGA_R,VGA_G,VGA_B})
 );
+
+playermovement move_mode(
+      .clk(Clk),
+      .reset(Reset),
+      .new_frame(new_frame),
+      .SW(SW),
+      .angleout(player_angle),
+      .position(player_pos),
+      .HEX0(HEX0),
+      .HEX1(HEX1),
+      .HEX2(HEX2),
+      .HEX3(HEX3),
+      .HEX4(HEX4),
+      .HEX5(HEX5),
+      .LEDR(LEDR)
+);
+
 
 endmodule
