@@ -37,8 +37,8 @@ posXY54 curPerpendVector; // perpendicular vector, scaled up to match dist_ctr
 posXY dir_L; // which direction does player_angle_L point?
 posXY dir_perpend; // which direction is from L to R?
 posXY dir_perpend_scaled; // this is a hacky solution, TODO replace with better lookup table when patrick wakes up
-assign	dir_perpend_scaled.x = dir_perpend.x + {dir_perpend.x[43], dir_perpend.x[43:1]}; // 3/2 happens to miraculously be a number that matches within like 2-3% of the scaling factor I need, otherwise I would have gone to sleep 
-assign	dir_perpend_scaled.y = dir_perpend.y + {dir_perpend.y[43], dir_perpend.y[43:1]};
+assign	dir_perpend_scaled.x = dir_perpend.x;// + {dir_perpend.x[43], dir_perpend.x[43:1]}; // 3/2 happens to miraculously be a number that matches within like 2-3% of the scaling factor I need, otherwise I would have gone to sleep 
+assign	dir_perpend_scaled.y = dir_perpend.y;// + {dir_perpend.y[43], dir_perpend.y[43:1]};
 
 angle player_angle_L;
 angle player_angle_perpend;
@@ -85,20 +85,20 @@ always_ff @(posedge Clk) begin
 			end
 			INIT_COUNTERS: begin
 				curHeight <= mapresult.height + 2; // we are 2 tall
-				dist_ctr <= 511; // change this and 4 lines below back to 511/256
-				curPosL.x <= curPos.x + (dir_L.x*256) + {dir_L.x[43], dir_L.x[43:1]};
-				curPosL.y <= curPos.y + (dir_L.y*256) + {dir_L.y[43], dir_L.y[43:1]};
-				curPerpendVector.x <= {{2{dir_perpend_scaled.x[43]}},dir_perpend_scaled.x, 8'b0} + {{11{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x[43:1]};
-				curPerpendVector.y <= {{2{dir_perpend_scaled.y[43]}},dir_perpend_scaled.y, 8'b0} + {{11{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y[43:1]};
+				dist_ctr <= 0;
+				curPosL.x <= curPos.x;
+				curPosL.y <= curPos.y;
+				curPerpendVector.x <= 0;
+				curPerpendVector.y <= 0;
 				state <= INIT_ROW;
 			end
 			INIT_ROW: begin
-				curPosL.x <= curPosL.x - {dir_L.x[43], dir_L.x[43:1]} - (dir_L.x[0]& ~dist_ctr[0]); // sub half of dir components from curPoses
-				slidingPos.x <= curPosL.x - {dir_L.x[43], dir_L.x[43:1]} - (dir_L.x[0]& ~dist_ctr[0]);
-				curPerpendVector.x <= curPerpendVector.x - {{11{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x[43:1]} - (dir_perpend.x[0]& ~dist_ctr[0]);
-				curPerpendVector.y <= curPerpendVector.y - {{11{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y[43:1]} - (dir_perpend.y[0]& ~dist_ctr[0]);
-				curPosL.y <= curPosL.y - {dir_L.y[43], dir_L.y[43:1]} - (dir_L.y[0]& ~dist_ctr[0]);
-				slidingPos.y <= curPosL.y - {dir_L.y[43], dir_L.y[43:1]} - (dir_L.y[0]& ~dist_ctr[0]);
+				curPosL.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]); // sub half of dir components from curPoses
+				slidingPos.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]);
+				curPerpendVector.x <= curPerpendVector.x + {{11{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x[43:1]} + (dir_perpend.x[0]& ~dist_ctr[0]);
+				curPerpendVector.y <= curPerpendVector.y + {{11{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y[43:1]} + (dir_perpend.y[0]& ~dist_ctr[0]);
+				curPosL.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
+				slidingPos.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
 				curX <= 0;
 				state <= RENDER_0;
 			end
@@ -118,28 +118,28 @@ always_ff @(posedge Clk) begin
 				//coords_out.x <= maplutpos.x.intpart;
 				//coords_out.y <= maplutpos.y.intpart;
 				//color_out <= mapresult.color;
-				if(!screencolsigned[17]) begin // TODO: switch back to screencol is positive
+				if(!screencolsigned[17]) begin
 					framebuffer_we <= 1;
 					coords_out.x <= curX;
 					if(screencolsigned > 239) coords_out.y <= 0;
 					else coords_out.y <= 239 - screencolsigned;
-					//coords_out.y <= 239 - mapresult.height; // change back to above TODO
+					//coords_out.y <= 239 - mapresult.height;
 					color_out <= mapresult.color;
 				end
 				if(curX == 319) begin
-					if(dist_ctr == 0) begin // TODO: switch back to 511
+					if(dist_ctr == 511) begin
 						state <= WAIT_ACK;
 						render_done <= 1;
 					end
 					else begin
-						dist_ctr <= dist_ctr - 1;
+						dist_ctr <= dist_ctr + 1;
 						state <= INIT_ROW;
 					end
 				end
 				else begin
 					curX <= curX + 1;
-					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>9);
-					slidingPos.y <= slidingPos.y + (curPerpendVector.y>>>9);
+					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>7); // why does this work
+					slidingPos.y <= slidingPos.y + (curPerpendVector.y>>>7);
 					state <= RENDER_0;
 				end
 			end
