@@ -9,15 +9,18 @@ module render_module (
 );
 
 fp44 sinresult;
-TrigLUT lut(.clk(Clk), .inval(coords_out.x*16), .outval(sinresult));
+TrigLUT triglut(.clk(Clk), .inval(coords_out.x*16), .outval(sinresult));
 logic[44:0] xsinscaled;
 assign xsinscaled = {sinresult.intpart+1, sinresult.fracpart}*128;
 
+maptile mapresult;
+MapLUT maplut(.clk(Clk), .x(coords_out.x), .y(coords_out.y), .data(mapresult));
+
 enum {WAIT_ACK, RENDERING} state;
 logic [2:0] pattern; // current pattern for testing
-assign pattern = 7;
-logic [7:0] patternctr;
-//assign pattern = patternctr[7:5];
+//assign pattern = 7;
+logic [9:0] patternctr;
+assign pattern = patternctr[9:7];
 
 always_ff @(posedge Clk) begin
 	if(Reset) begin
@@ -31,7 +34,8 @@ always_ff @(posedge Clk) begin
 				if(render_ack) begin
 					patternctr <= patternctr + 1;
 					state <= RENDERING;
-					coords_out <= '0;
+					coords_out.x <= 0;
+					coords_out.y <= 0;
 				end
 			end
 			RENDERING: begin
@@ -56,8 +60,11 @@ always_comb begin
 		2: if(coords_out.y == 0) color_out = pattern; // full screen
 		3: if(coords_out.x>>1 == coords_out.y) color_out = pattern; // flatter slant
 		4: if(coords_out.y == 120) color_out = pattern; // bottom half
-		5: if(coords_out.x == coords_out.y>>1) color_out = pattern; // steeper slant
-		6: if(coords_out.x[3]) color_out = pattern; // vertical stripes
+		5: color_out = mapresult.color;
+		6: begin
+			if(mapresult.height[5:3] == 0) color_out = 1;
+			else color_out = mapresult.height[5:3];
+		end
 		7: begin
 			if(coords_out.y==xsinscaled[44:37]) color_out = pattern;
 		end
