@@ -8,10 +8,16 @@ module render_module (
 	input render_ack
 );
 
+fp44 sinresult;
+TrigLUT lut(.clk(Clk), .inval(coords_out.x*16), .outval(sinresult));
+logic[44:0] xsinscaled;
+assign xsinscaled = {sinresult.intpart+1, sinresult.fracpart}*128;
+
 enum {WAIT_ACK, RENDERING} state;
 logic [2:0] pattern; // current pattern for testing
+assign pattern = 7;
 logic [7:0] patternctr;
-assign pattern = patternctr[7:5];
+//assign pattern = patternctr[7:5];
 
 always_ff @(posedge Clk) begin
 	if(Reset) begin
@@ -53,8 +59,7 @@ always_comb begin
 		5: if(coords_out.x == coords_out.y>>1) color_out = pattern; // steeper slant
 		6: if(coords_out.x[3]) color_out = pattern; // vertical stripes
 		7: begin
-			if(coords_out.y[3]) color_out = pattern; // horiz stripes
-			else color_out = 6;
+			if(coords_out.y==xsinscaled[44:37]) color_out = pattern;
 		end
 	endcase
 end

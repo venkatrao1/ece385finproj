@@ -247,6 +247,10 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -entity f
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name QIP_FILE lookuptables/TrigRom.qip
+set_global_assignment -name SYSTEMVERILOG_FILE lookuptables/TrigLUT.sv
+set_global_assignment -name QIP_FILE lookuptables/MapRom.qip
+set_global_assignment -name SYSTEMVERILOG_FILE lookuptables/MapLUT.sv
 set_global_assignment -name SYSTEMVERILOG_FILE render_module.sv
 set_global_assignment -name SDC_FILE finproj.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE vga_controller.sv
@@ -255,4 +259,13 @@ set_global_assignment -name SYSTEMVERILOG_FILE palette.sv
 set_global_assignment -name SYSTEMVERILOG_FILE output_module.sv
 set_global_assignment -name SYSTEMVERILOG_FILE framebuffer_module.sv
 set_global_assignment -name SYSTEMVERILOG_FILE finalproj.sv
+set_global_assignment -name ENABLE_OCT_DONE ON
+set_global_assignment -name EXTERNAL_FLASH_FALLBACK_ADDRESS 00000000
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
