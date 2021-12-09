@@ -49,6 +49,15 @@ TrigLUT triglut_perpendY(.clk(Clk), .inval(player_angle_perpend), .outval(dir_pe
 
 posXY slidingPos; // slides from left to right as our row counter increases
 
+logic[7:0] highestDrawnOut;
+logic[7:0] highestDrawn[320];// for each X val, what's the highest Y we've drawn on?
+always_ff @(posedge Clk) highestDrawnOut <= highestDrawn[curX];
+
+logic[7:0] outY;
+always_comb begin
+	if(screencolsigned > 239) outY = 0;
+	else outY = 239 - screencolsigned;
+end
 
 enum {
 	WAIT_ACK, // wait for acknowledgement signal
@@ -107,6 +116,7 @@ always_ff @(posedge Clk) begin
 				state <= RENDER_1;
 			end
 			RENDER_1: begin // maplut still processing
+				if(dist_ctr == 0) highestDrawn[curX] <= 255;
 				state <= RENDER_1_5;
 			end
 			RENDER_1_5: begin
@@ -119,15 +129,16 @@ always_ff @(posedge Clk) begin
 				//coords_out.y <= maplutpos.y.intpart;
 				//color_out <= mapresult.color;
 				if(!screencolsigned[17]) begin
-					framebuffer_we <= 1;
-					coords_out.x <= curX;
-					if(screencolsigned > 239) coords_out.y <= 0;
-					else coords_out.y <= 239 - screencolsigned;
-					//coords_out.y <= 239 - mapresult.height;
-					color_out <= mapresult.color;
+					if(outY < highestDrawnOut) begin
+						framebuffer_we <= 1;
+						highestDrawn[curX] <= outY;
+						coords_out.x <= curX;
+						coords_out.y <= outY;
+						color_out <= mapresult.color;
+					end
 				end
 				if(curX == 319) begin
-					if(dist_ctr == 511) begin
+					if(dist_ctr == 200) begin
 						state <= WAIT_ACK;
 						render_done <= 1;
 					end
