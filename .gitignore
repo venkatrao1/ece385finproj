@@ -5,3 +5,4 @@ simulation/
 adc_qsys/
 .qsys_edit/
 greybox_tmp/
+*.sopcinfo
