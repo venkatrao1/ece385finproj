@@ -89,7 +89,8 @@ render_module render_mod(
       .player_pos(player_pos),
       .player_angle(player_angle),
       .flight_mode(SW[0]),
-      .horizon(horizon)
+      .fly_highlow(SW[2]),
+      .horizon(horizon),
 );
 
 output_module output_mod(
@@ -101,7 +102,8 @@ output_module output_mod(
       .halfFrame(halfFrame),
 	.framebuffer_coords(output_mod_coords),
 	.framebuffer_output(framebuffer_out),
-	.color_out({VGA_R,VGA_G,VGA_B})
+	.color_out({VGA_R,VGA_G,VGA_B}),
+      .wireframe(SW[1])
 );
 
 movement_module movement_mod(

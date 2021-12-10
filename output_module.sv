@@ -8,7 +8,8 @@ module output_module (
 	output screenXY framebuffer_coords,
 	input logic [2:0] framebuffer_output,
 	output RGBcolor color_out,
-	output halfFrame
+	output halfFrame,
+	input wireframe
 );
 assign new_frame = ~cont_vs_delayed & vs; // pulses one cycle per frame, right before vsync dips
 
@@ -57,6 +58,7 @@ always_ff @(posedge Clk) begin
 			color_out <= framebufferRGB;
 			lastSeen[framebuffer_coords_delayed.x] <= framebuffer_output;
 		end
+		else if(wireframe) color_out <= '0;
 		else color_out <= lastSeenRGB;
 	end
 

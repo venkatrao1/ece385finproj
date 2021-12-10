@@ -10,11 +10,17 @@ module render_module (
 	input posXY player_pos,
 	input angle player_angle,
 	input flight_mode,
-	input [16:0] horizon
+	input [16:0] horizon,
+	input fly_highlow
 );
 
 localparam horizFOV = 245; // basically, tan of this angle = 320/240 * tan(vert_fov)
-localparam flyHeight = 80; // this can be any value between 63 (highest peaks) and 128
+
+logic [6:0] flyHeight; // this can be any value between 63 (highest peaks) and 127
+always_comb begin
+	if(fly_highlow) flyHeight = 127;
+	else flyHeight = 65;
+end
 
 maptile mapresult;
 posXY maplutpos;
