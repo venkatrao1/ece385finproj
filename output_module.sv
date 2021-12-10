@@ -6,7 +6,7 @@ module output_module (
 	output logic vs,
 	output logic new_frame, // literally just vsync inverted, pulses high for each frame
 	output screenXY framebuffer_coords,
-	input logic [2:0] framebuffer_output,
+	input palcolor framebuffer_output,
 	output RGBcolor color_out,
 	output halfFrame,
 	input wireframe
@@ -28,8 +28,8 @@ logic shouldDisplay_delayed;
 logic cont_vs_delayed;
 logic cont_hs_delayed;
 screenXY framebuffer_coords_delayed;
-logic [2:0] lastSeen [319:0]; // last seen colors
-logic [2:0] lastPaletteColor;
+palcolor lastSeen [319:0]; // last seen colors
+palcolor lastPaletteColor;
 RGBcolor lastSeenRGB;
 RGBcolor framebufferRGB;
 palette lastSeenPalette(.palette_index(lastPaletteColor), .color(lastSeenRGB));

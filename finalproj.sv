@@ -54,10 +54,10 @@ assign Clk = MAX10_CLK1_50; // if we want to use a PLL we can change this.
 screenXY output_mod_coords;
 logic new_frame;
 logic halfFrame;
-logic [2:0] framebuffer_out;
+palcolor framebuffer_out;
 
 screenXY render_mod_coords;
-logic [2:0] render_color;
+palcolor render_color;
 logic render_done, render_ack;
 logic framebuffer_we;
 

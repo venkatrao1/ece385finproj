@@ -24,9 +24,12 @@ typedef struct {
 
 typedef logic[10:0] angle;
 
+typedef logic[4:0] mapheight;
+typedef logic[3:0] palcolor;
+
 typedef struct packed {
-	logic [5:0] height;
-	logic [2:0] color;
+	mapheight height;
+	palcolor color;
 } maptile;
 
 `endif
