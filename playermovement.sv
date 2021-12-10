@@ -37,7 +37,6 @@ module playermovement(
 	fp44 sinresult;
 
 	logic [4:0] channel;
-	initial channel = 1;
 	
 	enum logic [2:0] {HALT, YMOVE, XMOVE, ANGLEWAIT, ANGLEMOVE} state, nextstate;
 	

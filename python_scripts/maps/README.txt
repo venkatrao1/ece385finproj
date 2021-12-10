@@ -1,0 +1,1 @@
+These maps were extracted from the Comanche series of games by s-macke on GitHub.

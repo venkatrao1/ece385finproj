@@ -256,6 +256,10 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name MIF_FILE lookuptables/TrigLUTGenerateFile.mif
+set_global_assignment -name MIF_FILE lookuptables/RenderStepLUTGenerateFile.mif
+set_global_assignment -name MIF_FILE lookuptables/MapLUTGenerateFile.mif
+set_global_assignment -name MIF_FILE lookuptables/HeightScaleROM.mif
 set_global_assignment -name VERILOG_FILE SEG7_LUT.v
 set_global_assignment -name QSYS_FILE adc_qsys.qsys
 set_global_assignment -name SYSTEMVERILOG_FILE playermovement.sv
