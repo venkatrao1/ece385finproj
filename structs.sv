@@ -6,17 +6,10 @@ typedef struct packed {
 	logic [35:0] fracpart;
 } fp44;
 
-typedef logic signed [53:0] fp54;
-
 typedef struct {
 	fp44 x;
 	fp44 y;
 } posXY;
-
-typedef struct {
-	fp54 x;
-	fp54 y;
-} posXY54;
 
 typedef struct packed {
 	logic [3:0] r;

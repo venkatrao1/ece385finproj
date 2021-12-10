@@ -1,0 +1,8 @@
+		0: color = 12'h8CF;
+		1: color = 12'h130;
+		2: color = 12'hC96;
+		3: color = 12'h368;
+		4: color = 12'h743;
+		5: color = 12'h135;
+		6: color = 12'h786;
+		7: color = 12'h361;

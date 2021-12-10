@@ -1,10 +1,9 @@
 //movement code
 `include "structs.sv"
-module playermovement(
+module movement_module(
 	input 	clk,
 	input 	reset,
-	input 	new_frame,
-	input [9:0] SW,
+	input 	halfFrame, // basically something that's high for half the frame, then low for about half
 	output angle angleout,
 	output posXY position,
 	output [7:0] HEX0,
@@ -13,9 +12,13 @@ module playermovement(
 	output [7:0] HEX3,
 	output [7:0] HEX4,
 	output [7:0] HEX5,
-	output [9:0] LEDR
-	);
+	input lookup_button,
+	input lookdown_button,
+	output [16:0] horizon
+);
 	
+	localparam turnspeed = 5;
+
 	fp44 xcoordvar;
 	fp44 ycoordvar;
 	angle anglevar; //not sure if we need these	
@@ -24,19 +27,38 @@ module playermovement(
 	logic moveback;
 	logic turnleft;
 	logic turnright;
-		
+
+	logic hf_prev;
+	logic new_frame;
+	always_ff @(posedge sys_clk) hf_prev <= halfFrame; // this module uses a diff clock so recalc new_frame
+	assign new_frame = (halfFrame & ~hf_prev);
+
 	assign angleout = anglevar;
 	assign position.x = xcoordvar;
 	assign position.y = ycoordvar;
-	
+
+	initial angleout = 512;
+	initial position.x = 0;
+	initial position.y = 0;
+	initial horizon = 80;
 	
 	//zero angle points east
 	//origin coord in the bottom left
 	
 	TrigLUT lut(.clk(clk), .inval(anglein), .outval(sinresult));
 	fp44 sinresult;
+	fp44 sinslash4;
+	assign sinslash4 = {sinresult[43], sinresult[43], sinresult[43:2]};
 
 	logic [4:0] channel;
+
+	always_ff @(posedge sys_clk) begin
+		if(reset) horizon <= 80;
+		else if(new_frame) begin
+			if(~lookup_button) horizon <= horizon - 1; // move horizon down when looking up
+			else if(~lookdown_button) horizon <= horizon + 1;
+		end
+	end
 	
 	enum logic [2:0] {HALT, YMOVE, XMOVE, ANGLEWAIT, ANGLEMOVE} state, nextstate;
 	
@@ -56,21 +78,20 @@ module playermovement(
 				channel <= 1;
 			end
 			YMOVE: begin
-				if(movefor && cur_adc_ch == 1) ycoordvar <= ycoordvar + (sinresult);
-				if(moveback && cur_adc_ch == 1) ycoordvar <= ycoordvar - (sinresult);
-				if(anglevar <= 512) anglein <= 512 - anglevar; //pi/2 - angle to get cosine
-				else anglein <= 2560 - anglevar; //5pi/2 - angle to get cosine
+				if(movefor && cur_adc_ch == 1) ycoordvar <= ycoordvar + sinslash4;
+				if(moveback && cur_adc_ch == 1) ycoordvar <= ycoordvar - sinslash4;
+				anglein <= 512 + anglevar; //pi/2 - angle to get cosine
 				channel <= 1;
 			end
 			XMOVE: begin
-				if(movefor && cur_adc_ch == 1)xcoordvar <= xcoordvar + (sinresult);
-				if(moveback && cur_adc_ch == 1)xcoordvar <= xcoordvar - (sinresult);
+				if(movefor && cur_adc_ch == 1)xcoordvar <= xcoordvar + sinslash4;
+				if(moveback && cur_adc_ch == 1)xcoordvar <= xcoordvar - sinslash4;
 				channel <= 2;
 			end
 			ANGLEWAIT: channel<= 2;
 			ANGLEMOVE: begin
-				if(turnleft && cur_adc_ch == 2) anglevar <= anglevar + 10;
-				if(turnright && cur_adc_ch == 2) anglevar <= anglevar - 10;
+				if(turnleft && cur_adc_ch == 2) anglevar <= anglevar + turnspeed;
+				if(turnright && cur_adc_ch == 2) anglevar <= anglevar - turnspeed;
 				channel <= 1;
 			end
 			
@@ -82,13 +103,13 @@ module playermovement(
 		//nextstate = state; //default if no new_frame
 		unique case(state)
 			HALT: begin
-				if(new_frame) nextstate = YMOVE;
+				if(halfFrame) nextstate = YMOVE;
 				else nextstate = HALT;
 			end
 			YMOVE: nextstate = XMOVE;
 			XMOVE: nextstate = ANGLEWAIT;
 			ANGLEWAIT: begin
-				if(new_frame) nextstate = ANGLEMOVE;
+				if(!halfFrame) nextstate = ANGLEMOVE;
 				else nextstate = ANGLEWAIT;
 			end
 			ANGLEMOVE: nextstate = HALT;
@@ -136,7 +157,7 @@ adc_qsys u0 (
         .modular_adc_0_command_endofpacket    (command_endofpacket),    //                       .endofpacket
         .modular_adc_0_command_ready          (command_ready),          //                       .ready
         .modular_adc_0_response_valid         (response_valid),         // modular_adc_0_response.valid
-		  .modular_adc_0_response_channel       (response_channel),       //                       .channel
+	.modular_adc_0_response_channel       (response_channel),       //                       .channel
         .modular_adc_0_response_data          (response_data),          //                       .data
         .modular_adc_0_response_startofpacket (response_startofpacket), //                       .startofpacket
         .modular_adc_0_response_endofpacket   (response_endofpacket),    //                       .endofpacket
@@ -166,7 +187,6 @@ wire response_startofpacket;
 wire response_endofpacket;
 reg [4:0]  cur_adc_ch /* synthesis noprune */;
 reg [11:0] adc_sample_data /* synthesis noprune */;
-reg [12:0] vol /* synthesis noprune */;
 
 always @ (posedge sys_clk)
 begin
@@ -183,8 +203,6 @@ assign HEX3[7] = 1'b1; // low active
 assign HEX2[7] = 1'b1; // low active
 assign HEX1[7] = 1'b1; // low active
 assign HEX0[7] = 1'b1; // low active
-
-assign LEDR = {{6{1'b0}},movefor,moveback,turnleft,turnright};
 
 SEG7_LUT	SEG7_LUT_5 (
 	.oSEG(HEX5),

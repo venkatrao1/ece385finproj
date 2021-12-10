@@ -8,37 +8,45 @@ module render_module (
 	output render_done,
 	input render_ack,
 	input posXY player_pos,
-	input angle player_angle
+	input angle player_angle,
+	input flight_mode,
+	input [16:0] horizon
 );
 
 localparam horizFOV = 245; // basically, tan of this angle = 320/240 * tan(vert_fov)
-localparam horizonY = 120; // the horizon is midway down by default
+localparam flyHeight = 80; // this can be any value between 63 (highest peaks) and 128
 
 maptile mapresult;
 posXY maplutpos;
 MapLUT maplut(.clk(Clk), .x(maplutpos.x.intpart), .y(maplutpos.y.intpart), .data(mapresult));
 
-logic [26:0] mul_a;
-logic [7:0] mul_b;
+logic [7:0] heightdiff;
 logic [35:0] mulresult;
-logic [17:0] screencolsigned;
-heightmultiplier hmul(.dataa({1'b0, mul_a}), .datab(mul_b), .result(mulresult)); // a is unsigned
-assign mul_b = mapresult.height - curHeight;
+heightmultiplier hmul(.dataa({1'b0, heightscale}), .datab(heightdiff), .result(mulresult)); // heightscale is unsigned
+assign heightdiff = mapresult.height - curHeight;
 
-HeightScaleROM hsrom(.clock(Clk), .address(dist_ctr), .q(mul_a));
+logic[26:0] heightscale;
+HeightScaleROM hsrom(.clock(Clk), .address(dist_ctr), .q(heightscale));
 
 logic [8:0] dist_ctr; // counts from 0 to 511 and calculates the half tile distance.
 logic [8:0] curX; // counts from 0 to 319, current col being rendered to.
 
-posXY curPos;
 logic[6:0] curHeight;
 posXY curPosL;
-posXY54 curPerpendVector; // perpendicular vector, scaled up to match dist_ctr
+struct {
+	logic [53:0] x;
+	logic [53:0] y;
+} curPerpendVector; // perpendicular vector, scaled up to match dist_ctr (needs to be big)
 posXY dir_L; // which direction does player_angle_L point?
 posXY dir_perpend; // which direction is from L to R?
-posXY dir_perpend_scaled; // this is a hacky solution, TODO replace with better lookup table when patrick wakes up
-assign	dir_perpend_scaled.x = dir_perpend.x;// + {dir_perpend.x[43], dir_perpend.x[43:1]}; // 3/2 happens to miraculously be a number that matches within like 2-3% of the scaling factor I need, otherwise I would have gone to sleep 
-assign	dir_perpend_scaled.y = dir_perpend.y;// + {dir_perpend.y[43], dir_perpend.y[43:1]};
+
+logic [17:0] screencolsigned; // position to draw to on screen
+
+posXY nextPosL;
+always_comb begin
+	nextPosL.x = curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]); // sub half of dir components from curPoses
+	nextPosL.y = curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
+end
 
 angle player_angle_L;
 angle player_angle_perpend;
@@ -66,8 +74,8 @@ enum {
 	INIT_ROW, // do beginning of row things like add to curPosL and curPosR
 	RENDER_0,
 	RENDER_1,
-	RENDER_1_5,
-	RENDER_2
+	RENDER_2,
+	RENDER_3
 } state;
 
 always_ff @(posedge Clk) begin
@@ -80,34 +88,28 @@ always_ff @(posedge Clk) begin
 			WAIT_ACK: begin
 				framebuffer_we <= 0;
 				render_done <= 0;
-				curPos <= player_pos;
 				maplutpos <= player_pos;
 				curPosL <= player_pos;
 				player_angle_L <= player_angle + horizFOV;
-				player_angle_perpend <= player_angle - 512;
-				if(render_ack) begin
-					state <= WAIT_LUTS_INIT;
-				end
+				player_angle_perpend <= player_angle + 1536; // this is 90 degrees clockwise of where we're looking
+				if(render_ack) state <= WAIT_LUTS_INIT;
 			end
-			WAIT_LUTS_INIT: begin
-				state <= INIT_COUNTERS;
-			end
+			WAIT_LUTS_INIT: state <= INIT_COUNTERS; // wait for mapresult to load
 			INIT_COUNTERS: begin
-				curHeight <= mapresult.height + 2; // we are 2 tall
+				if(flight_mode) curHeight <= flyHeight;
+				else curHeight <= mapresult.height + 2; // we are 2 units tall, make height moving average so it'
 				dist_ctr <= 0;
 				curPerpendVector.x <= 0;
 				curPerpendVector.y <= 0;
 				state <= INIT_ROW;
 			end
 			INIT_ROW: begin
-				curPosL.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]); // sub half of dir components from curPoses
-				slidingPos.x <= curPosL.x + {dir_L.x[43], dir_L.x[43:1]} + (dir_L.x[0]& ~dist_ctr[0]);
-				// these numbers are going to be 18 bits dec, 36 bits frac
-				// so curPerPendVector is currently += dir_perpend_scaled*1 = actual dir * 2^8
-				curPerpendVector.x <= curPerpendVector.x + {{10{dir_perpend_scaled.x[43]}}, dir_perpend_scaled.x};
-				curPerpendVector.y <= curPerpendVector.y + {{10{dir_perpend_scaled.y[43]}}, dir_perpend_scaled.y};
-				curPosL.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
-				slidingPos.y <= curPosL.y + {dir_L.y[43], dir_L.y[43:1]} + (dir_L.y[0]& ~dist_ctr[0]);
+				curPosL <= nextPosL;
+				slidingPos <= nextPosL;
+				// curPerpendVector has 18 bits dec, 36 bits frac
+				// so curPerPendVector is currently += dir_perpend*1 = actual dir * 2^8
+				curPerpendVector.x <= curPerpendVector.x + {{10{dir_perpend.x[43]}}, dir_perpend.x};
+				curPerpendVector.y <= curPerpendVector.y + {{10{dir_perpend.y[43]}}, dir_perpend.y};
 				curX <= 0;
 				state <= RENDER_0;
 			end
@@ -115,44 +117,36 @@ always_ff @(posedge Clk) begin
 				maplutpos <= slidingPos;
 				state <= RENDER_1;
 			end
-			RENDER_1: begin // maplut still processing
-				if(dist_ctr == 0) highestDrawn[curX] <= 255;
-				state <= RENDER_1_5;
+			RENDER_1: begin
+				if(dist_ctr == 0) highestDrawn[curX] <= '1;
+				state <= RENDER_2; // mapLUT still processing
 			end
-			RENDER_1_5: begin
-				screencolsigned <= mulresult[35:18] + horizonY; // how many columns should we take up?
-				state <= RENDER_2;
+			RENDER_2: begin
+				screencolsigned <= mulresult[35:18] + horizon; // how many columns should we take up?
+				state <= RENDER_3;
 			end
-			RENDER_2: begin // maplut done, now check mul result
-				//framebuffer_we <= 1;
-				//coords_out.x <= maplutpos.x.intpart;
-				//coords_out.y <= maplutpos.y.intpart;
-				//color_out <= mapresult.color;
-				if(!screencolsigned[17]) begin
-					if(outY < highestDrawnOut) begin
-						framebuffer_we <= 1;
-						highestDrawn[curX] <= outY;
-						coords_out.x <= curX;
-						coords_out.y <= outY;
-						color_out <= mapresult.color;
-					end
+			RENDER_3: begin // maplut done, now check mul result
+				if(!screencolsigned[17] && outY < highestDrawnOut) begin
+					framebuffer_we <= 1;
+					highestDrawn[curX] <= outY;
+					coords_out.x <= curX;
+					coords_out.y <= outY;
+					color_out <= mapresult.color;
 				end
 				if(curX == 319) begin
 					if(dist_ctr == 511) begin
 						state <= WAIT_ACK;
 						render_done <= 1;
 					end
-					else begin
-						dist_ctr <= dist_ctr + 1;
-						state <= INIT_ROW;
-					end
+					else state <= INIT_ROW;
+					dist_ctr <= dist_ctr + 1;
 				end
 				else begin
-					curX <= curX + 1;
-					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>8); // why does this work
+					slidingPos.x <= slidingPos.x + (curPerpendVector.x>>>8);
 					slidingPos.y <= slidingPos.y + (curPerpendVector.y>>>8);
 					state <= RENDER_0;
 				end
+				curX <= curX + 1;
 			end
 		endcase
 	end

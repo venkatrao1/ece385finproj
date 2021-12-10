@@ -9,13 +9,13 @@ mifcolors = []
 mifheights = []
 
 with Image.open("maps/" + colorfile + ".png") as colormap:
-	colorsmall = colormap.resize((256,256), resample = Image.LANCZOS).quantize(colors=7, method=Image.MEDIANCUT)
+	colorsmall = colormap.resize((256,256), resample = Image.LANCZOS).quantize(colors=7, method=Image.MEDIANCUT) # change to MAXCOVERAGE/MEDIANCUT and compare
 	with open("generated/" + colorfile + "_palette.txt", mode="w") as palettefile:
 		pal = colorsmall.getpalette()[:21]
 		palettefile.write(skycolor)
 		for i in range(1,8):
 			curcolor = tuple(pal[(i-1)*3:i*3])
-			colorhex = "".join(hex(c)[2] for c in curcolor).upper()
+			colorhex = "".join(hex(int(round((c*15)/255)))[2] for c in curcolor).upper()
 			palettefile.write("\t\t"+str(i)+": color = 12'h" + colorhex + ";\n")
 	for x in range(256):
 		for y in range(256):
@@ -25,7 +25,7 @@ with Image.open("maps/"+heightfile+".png") as heightmap:
 	heightsmall = heightmap.resize((256,256), resample = Image.LANCZOS)
 	for x in range(256):
 		for y in range(256):
-			mifheights.append(int(heightsmall.getpixel((x,y))/4)) # palette index
+			mifheights.append(int(round((heightsmall.getpixel((x,y))*63)/255))) # palette index
 
 with open("generated/" + colorfile+".mif", mode="w") as outfile:
 	outfile.write("Width=9;\nDEPTH=65536;\nADDRESS_RADIX=HEX;\nDATA_RADIX=HEX;\nCONTENT BEGIN\n")

@@ -7,7 +7,8 @@ module output_module (
 	output logic new_frame, // literally just vsync inverted, pulses high for each frame
 	output screenXY framebuffer_coords,
 	input logic [2:0] framebuffer_output,
-	output RGBcolor color_out
+	output RGBcolor color_out,
+	output halfFrame
 );
 assign new_frame = ~cont_vs_delayed & vs; // pulses one cycle per frame, right before vsync dips
 
@@ -19,6 +20,7 @@ logic cont_vs;
 vga_controller vga_cont(.Clk(Clk), .Reset(Reset), .hs(cont_hs), .vs(cont_vs), .pixel_clk(), .blank(shouldDisplay), .sync(), .DrawX(DrawX), .DrawY(DrawY));
 assign framebuffer_coords.x = DrawX[9:1];
 assign framebuffer_coords.y = DrawY[8:1];
+assign halfFrame = DrawY[9];
 
 // calculate palette color (1 cycle later)
 logic shouldDisplay_delayed;

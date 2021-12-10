@@ -5,24 +5,16 @@ module palette (
 	output RGBcolor color
 );
 
-/*
-always_comb begin // dummy palette which has the nice property of color 0 being black
-	color.r = {palette_index[2], 3'b0};
-	color.g = {palette_index[1], 3'b0};
-	color.b = {palette_index[0], 3'b0};
-end
-*/
-
 always_comb begin
 	case(palette_index)
 		0: color = 12'h8CF;
 		1: color = 12'hB86;
-		2: color = 12'hB74;
-		3: color = 12'hA75;
-		4: color = 12'h974;
+		2: color = 12'hA75;
+		3: color = 12'h975;
+		4: color = 12'h975;
 		5: color = 12'h964;
-		6: color = 12'h655;
-		7: color = 12'h432;
+		6: color = 12'h656;
+		7: color = 12'h433;
 	endcase
 end
 
