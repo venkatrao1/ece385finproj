@@ -3,7 +3,7 @@ module render_module (
 	input Clk,
 	input Reset,
 	output screenXY coords_out,
-	output [2:0] color_out,
+	output palcolor color_out,
 	output framebuffer_we,
 	output render_done,
 	input render_ack,
@@ -16,7 +16,7 @@ module render_module (
 
 localparam horizFOV = 245; // basically, tan of this angle = 320/240 * tan(vert_fov)
 
-logic [6:0] flyHeight; // this can be any value between 63 (highest peaks) and 127
+logic [6:0] flyHeight; // this can be any value between 32 (highest peaks) and 127
 always_comb begin
 	if(fly_highlow) flyHeight = 127;
 	else flyHeight = 65;

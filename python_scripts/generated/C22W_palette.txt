@@ -1,0 +1,16 @@
+		0: color = skycolor;
+		1: color = 12'hEEE;
+		2: color = 12'hDEE;
+		3: color = 12'hDEE;
+		4: color = 12'hDDD;
+		5: color = 12'hCCC;
+		6: color = 12'hCBB;
+		7: color = 12'hAAB;
+		8: color = 12'hA99;
+		9: color = 12'h999;
+		10: color = 12'h888;
+		11: color = 12'h58A;
+		12: color = 12'h47A;
+		13: color = 12'h777;
+		14: color = 12'h666;
+		15: color = 12'h444;

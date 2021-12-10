@@ -1,3 +1,4 @@
+# outdated; works with old map data format, should work with minor changes though
 import math
 
 hillsize = 50;
@@ -37,7 +38,7 @@ with open ('MapLUTGenerateFile.mif', 'w') as map:
                 height = 15 - (0.25 * (xdist + ydist))
                 color = 5
 
-            heightandcolor = hex(int(height)*8 + color) #make flat area and hill different colors
+            heightandcolor = hex(int(height)*16 + color) #make flat area and hill different colors
             map.write(str(heightandcolor)[2:].upper())
 
             map.write(";\n")
