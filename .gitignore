@@ -2,3 +2,6 @@ db/
 incremental_db/
 output_files/
 simulation/
+adc_qsys/
+.qsys_edit/
+greybox_tmp/
