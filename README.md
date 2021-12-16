@@ -16,3 +16,5 @@ Written entirely in SystemVerilog, except for memory and analog to digital conve
  - Second switch from the right enables a 'wireframe'/debug mode
  - Third switch from the right controls height while flying
  - Leftmost switch can be used to reset the circuit
+
+For more information, see the [report](Report.pdf) for this project.
